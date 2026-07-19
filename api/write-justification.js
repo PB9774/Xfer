@@ -1,4 +1,6 @@
-
+// api/write-justification.js
+// Called when head office approves a payment — generates a public permanent justification
+// Frontend calls: fetch("/api/write-justification", { method:"POST", body: JSON.stringify({...}) })
 
 export default async function handler(req, res) {
   if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
@@ -6,9 +8,7 @@ export default async function handler(req, res) {
   const { district, purpose, allocated, requested, priorityScore, riskScore, adminReason } = req.body;
   if (!district || !purpose || !allocated) return res.status(400).json({ error: "Missing fields" });
 
-  const prompt = `You are writing a public transparency report for a government fund allocation decision in India.
-Write a clear, professional 3-sentence justification that will be permanently recorded on the blockchain.
-Be factual. Do not invent details not given. Return ONLY the justification text — no quotes, no labels.
+  const prompt = `You are writing a public transparency report for a government fund allocation decision in India. Write a clear, professional 3-sentence justification that will be permanently recorded on the blockchain. Be factual. Do not invent details not given. Return ONLY the justification text — no quotes, no labels.
 
 Fund Allocation Details:
 District: ${district}

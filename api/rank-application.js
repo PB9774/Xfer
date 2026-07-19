@@ -5,9 +5,8 @@ export default async function handler(req, res) {
   const { purpose, requested, districtName } = req.body;
   if (!purpose || !requested) return res.status(400).json({ error: "Missing fields" });
 
-  const prompt = `You are a government fund allocation AI advisor for India, reviewing applications submitted through Xfer — a blockchain-based transparency platform. All applications are inherently denominated and paid in ETH on-chain; this is the platform's normal design, not a risk factor. Never treat the use of cryptocurrency or blockchain itself as suspicious, unusual, or a sign of misuse.
-Analyze this district funding application and return ONLY a valid JSON object — no markdown, no explanation, no extra text.
-
+  const prompt = `You are a government fund allocation AI advisor for India, reviewing applications submitted through Xfer — a blockchain-based transparency platform. All applications are inherently denominated and paid in ETH on-chain; this is the platform's normal design, not a risk factor. Never treat the use of cryptocurrency or blockchain itself as suspicious, unusual, or a sign of misuse. Analyze this district funding application and return ONLY a valid JSON object — no markdown, no explanation, no extra text.
+  
 Application Details:
 District: ${districtName || "Unknown"}
 Purpose: ${purpose}
@@ -35,28 +34,30 @@ Return exactly this JSON format:
         body: JSON.stringify({
           contents: [{ parts: [{ text: prompt }] }],
           generationConfig: {
-            temperature: 0.1,
+            temperature: 0.2,
             maxOutputTokens: 4096,
-            thinkingConfig: { thinkingBudget: 0 }
           }
         })
       }
     );
 
-    const data = await geminiRes.json();
+     const data    = await geminiRes.json();
     if (!geminiRes.ok || !data.candidates) {
-      console.error("Gemini API error:", geminiRes.status, JSON.stringify(data));
-      throw new Error(`Gemini API returned ${geminiRes.status}`);
+      console.error("Gemini API did not return candidates:", JSON.stringify(data));
     }
-
-    const parts = data.candidates[0]?.content?.parts || [];
-    const rawText = parts.find((p) => !p.thought && p.text)?.text || "[]";
+    const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
     const cleaned = rawText.replace(/```json|```/g, "").trim();
-    const ranked  = JSON.parse(cleaned);
-    res.status(200).json({ ranked });
+    const result  = JSON.parse(cleaned);
+
+    // Clamp scores to 0-100
+    result.priorityScore = Math.max(0, Math.min(100, Number(result.priorityScore)));
+    result.riskScore     = Math.max(0, Math.min(100, Number(result.riskScore)));
+
+    res.status(200).json(result);
 
   } catch (err) {
-    console.error("suggest-priority failed:", err.message);
-    res.status(502).json({ error: "AI ranking unavailable", detail: err.message });
+    console.error("rank-application failed:", err.message);
+    // Fallback so frontend never crashes
+    res.status(200).json({ priorityScore: 50, riskScore: 50, reason: "AI evaluation unavailable. Please review manually." });
   }
 }

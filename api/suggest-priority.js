@@ -1,3 +1,6 @@
+// api/suggest-priority.js
+// Called from admin panel — AI reads all pending applications and ranks them
+// Frontend calls: fetch("/api/suggest-priority", { method:"POST", body: JSON.stringify({ applications }) })
 
 export default async function handler(req, res) {
   if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
@@ -9,14 +12,10 @@ export default async function handler(req, res) {
     `${i + 1}. ID #${a.id} | District: ${a.district} | Purpose: ${a.purpose} | Requested: ${a.requested} ETH`
   ).join("\n");
 
-  const prompt = `You are a government fund allocation AI advisor for India.
-Rank these pending funding applications from highest to lowest priority.
-Consider: urgency, population impact, humanitarian need, and value for money.
-Return ONLY a valid JSON array — no markdown, no explanation.
+  const prompt = `You are a government fund allocation AI advisor for India. Rank these pending funding applications from highest to lowest priority. Consider: urgency, population impact, humanitarian need, and value for money. Return ONLY a valid JSON array — no markdown, no explanation.
 
 Pending Applications:
 ${appList}
-
 Return this exact format:
 [{"id": <number>, "rank": <number>, "reason": "<1 sentence>", "suggestedAction": "Approve" or "Review" or "Reject"}]`;
 
