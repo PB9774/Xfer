@@ -1,6 +1,3 @@
-// api/suggest-priority.js
-// Called from admin panel — AI reads all pending applications and ranks them
-// Frontend calls: fetch("/api/suggest-priority", { method:"POST", body: JSON.stringify({ applications }) })
 
 export default async function handler(req, res) {
   if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });

@@ -1,6 +1,3 @@
-// api/rank-application.js
-// Vercel serverless function — GEMINI_API_KEY stored in Vercel environment variables
-// Get your free key at: https://aistudio.google.com/app/apikey
 
 export default async function handler(req, res) {
   if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
