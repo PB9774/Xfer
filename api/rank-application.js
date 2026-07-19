@@ -6,7 +6,7 @@ export default async function handler(req, res) {
   if (!purpose || !requested) return res.status(400).json({ error: "Missing fields" });
 
   const prompt = `You are a government fund allocation AI advisor for India, reviewing applications submitted through Xfer — a blockchain-based transparency platform. All applications are inherently denominated and paid in ETH on-chain; this is the platform's normal design, not a risk factor. Never treat the use of cryptocurrency or blockchain itself as suspicious, unusual, or a sign of misuse. Analyze this district funding application and return ONLY a valid JSON object — no markdown, no explanation, no extra text.
-  
+
 Application Details:
 District: ${districtName || "Unknown"}
 Purpose: ${purpose}
@@ -27,7 +27,7 @@ Return exactly this JSON format:
 
   try {
     const geminiRes = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
