@@ -1,0 +1,439 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Xfer — Public Audit Dashboard</title>
+    <link rel="stylesheet" href="../CSS/style.css" />
+    <script src="https://cdn.jsdelivr.net/npm/ethers@6.13.5/dist/ethers.umd.min.js"></script>
+    <style>
+      /* ── Minimal additions for public audit page only ───────────────────── */
+      .main { max-width: none; width: 100%; padding: 28px 40px 48px; }
+
+      .stats { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+      @media (max-width: 1200px) { .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+      @media (max-width: 640px)  { .stats { grid-template-columns: 1fr; } }
+
+      .card, .stats { width: 100%; }
+      .table-wrap table { min-width: 1180px; width: 100%; }
+
+      .mini-bar { width: 60px; height: 6px; background: var(--bg); border: 1px solid var(--border); border-radius: 3px; overflow: hidden; flex-shrink: 0; }
+      .mini-bar-fill { height: 100%; border-radius: 3px; transition: width .3s ease; }
+
+      .load-row { display: flex; align-items: center; justify-content: center; gap: 10px; padding: 56px 20px; color: var(--text-3); font-size: 13px; }
+      .spinner { width: 16px; height: 16px; border: 2px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin .7s linear infinite; flex-shrink: 0; }
+      @keyframes spin { to { transform: rotate(360deg); } }
+
+      .stat-value.loading { color: var(--text-3); }
+      .refresh-btn:disabled { opacity: .6; cursor: default; }
+
+      @media (max-width: 768px) {
+        .main { padding: 16px 14px 40px; }
+        .page-header { flex-direction: column; align-items: flex-start; gap: 10px; }
+        .page-header h1 { font-size: 19px; }
+
+        .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+        .stat-card { padding: 14px 16px; }
+        .stat-value { font-size: 19px; }
+
+        .card-header { flex-direction: column; align-items: stretch; gap: 10px; }
+        .card-header > div { flex-direction: column; width: 100%; gap: 8px !important; }
+        #searchInput, #statusFilter { width: 100% !important; }
+
+        .table-wrap { -webkit-overflow-scrolling: touch; }
+        .table-wrap table { min-width: 900px; }
+
+        .detail-grid-3, .detail-grid-2 { grid-template-columns: 1fr !important; }
+      }
+
+      @media (max-width: 480px) {
+        .stats { grid-template-columns: 1fr; }
+        .table-wrap table { min-width: 780px; }
+        html { font-size: 14px; }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="layout" id="layout">
+      <aside class="sidebar" id="sidebar">
+        <button
+          class="sidebar-toggle"
+          onclick="toggleSidebar()"
+          title="Toggle sidebar"
+        >
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+          >
+            <line x1="3" y1="6" x2="21" y2="6" />
+            <line x1="3" y1="12" x2="21" y2="12" />
+            <line x1="3" y1="18" x2="21" y2="18" />
+          </svg>
+        </button>
+        <a href="../index.html" class="logo">
+          <div class="logo-mark"></div>
+          <div>
+            <div class="logo-text">Xfer</div>
+            <div class="logo-sub">Fund Protocol</div>
+          </div>
+        </a>
+        <div class="sidebar-inner">
+          <span class="nav-label">Public Audit</span>
+          <a href="#overview" class="nav-link active" data-label="Overview">
+            <svg
+              class="icon"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <path d="M3 3h7v7H3zM14 3h7v7h-7zM3 14h7v7H3zM14 14h7v7h-7z" />
+            </svg>
+            <span class="nav-text">Overview</span>
+          </a>
+          <a
+            href="#applications"
+            class="nav-link"
+            data-label="All Applications"
+          >
+            <svg
+              class="icon"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <rect x="3" y="3" width="18" height="18" rx="2" />
+              <path d="M9 9h6M9 13h6M9 17h4" />
+            </svg>
+            <span class="nav-text">All Applications</span>
+          </a>
+          <span class="nav-label">Enter App</span>
+          <a href="district.html" class="nav-link" data-label="District Portal">
+            <svg
+              class="icon"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+              <circle cx="9" cy="7" r="4" />
+            </svg>
+            <span class="nav-text">District Portal</span>
+          </a>
+          <a href="admin.html" class="nav-link" data-label="Head Office">
+            <svg
+              class="icon"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <circle cx="12" cy="12" r="3" />
+              <path
+                d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"
+              />
+            </svg>
+            <span class="nav-text">Head Office</span>
+          </a>
+          <div class="wallet-box">
+            <div
+              style="
+                font-size: 11px;
+                color: var(--text-3);
+                margin-bottom: 6px;
+                font-weight: 500;
+              "
+            >
+              Contract Address
+            </div>
+            <div
+              class="hash hash-lg"
+              onclick="copyAddress()"
+              style="
+                display: flex;
+                width: 100%;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+              "
+              title="Click to copy"
+              id="contractAddrDisplay"
+            >
+              0x777D236b0a397D79bc5f0c4C501bd14261D3262f
+            </div>
+            <div style="margin-top: 8px">
+              <a
+                href="https://sepolia.etherscan.io/address/0x777D236b0a397D79bc5f0c4C501bd14261D3262f"
+                target="_blank"
+                rel="noopener"
+                class="hash-link"
+                style="font-size: 11px; font-weight: 500;"
+                >View on Sepolia Etherscan ↗</a
+              >
+            </div>
+          </div>
+        </div>
+      </aside>
+
+      <main class="main">
+        <div class="page-header flex-between">
+          <div>
+            <h1>Public Audit Dashboard</h1>
+            <p>
+              All data read directly from the blockchain. Nothing can be hidden
+              or edited.
+            </p>
+          </div>
+          <button class="btn btn-ghost btn-sm refresh-btn" id="refreshBtn" onclick="loadAll()">
+            ↻ Live Refresh
+          </button>
+        </div>
+
+        <div id="globalError"></div>
+
+        <!-- Stats -->
+        <div class="stats" id="overview">
+          <div class="stat-card">
+            <div class="stat-label">Treasury Balance</div>
+            <div class="stat-value blue loading" id="s-balance">—</div>
+            <div class="stat-sub">live from contract</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Total Applications</div>
+            <div class="stat-value loading" id="s-total">—</div>
+            <div class="stat-sub">since deployment</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Funds Released</div>
+            <div class="stat-value green loading" id="s-released">—</div>
+            <div class="stat-sub" id="s-districts">—</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Reserved (Approved)</div>
+            <div class="stat-value amber loading" id="s-reserved">—</div>
+            <div class="stat-sub">pending release</div>
+          </div>
+        </div>
+
+        <!-- Distribution bar -->
+        <div class="card" style="margin-bottom: 20px" id="distributionCard">
+          <div class="card-body">
+            <div class="flex-between" style="margin-bottom: 12px">
+              <span class="form-label" style="margin: 0"
+                >Application Status Distribution</span
+              >
+              <span class="text-muted text-sm" id="distTotalLabel">—</span>
+            </div>
+            <div
+              id="distBar"
+              style="
+                display: flex;
+                height: 12px;
+                border-radius: 6px;
+                overflow: hidden;
+                gap: 2px;
+                background: var(--bg);
+              "
+            ></div>
+            <div id="distLegend"
+              style="
+                display: flex;
+                gap: 20px;
+                margin-top: 12px;
+                flex-wrap: wrap;
+              "
+            ></div>
+          </div>
+        </div>
+
+        <!-- All applications -->
+        <section id="applications">
+          <div class="card">
+            <div class="card-header">
+              <span class="card-title">All Applications</span>
+              <div style="display: flex; gap: 8px">
+                <input
+                  type="text"
+                  class="form-input"
+                  id="searchInput"
+                  placeholder="Search district, purpose, or reason..."
+                  style="width: 260px; padding: 6px 12px; font-size: 12px"
+                  oninput="applyFilters()"
+                />
+                <select
+                  class="form-select"
+                  id="statusFilter"
+                  style="width: 130px; padding: 6px 10px; font-size: 12px"
+                  onchange="applyFilters()"
+                >
+                  <option value="all">All Status</option>
+                  <option value="0">Pending</option>
+                  <option value="1">Approved</option>
+                  <option value="2">Rejected</option>
+                  <option value="3">Funded</option>
+                </select>
+              </div>
+            </div>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>ID</th>
+                    <th>District</th>
+                    <th>Purpose</th>
+                    <th>Requested</th>
+                    <th>Allocated</th>
+                    <th>AI Priority</th>
+                    <th>AI Risk</th>
+                    <th>Status</th>
+                    <th>Decision Reason</th>
+                    <th>Submitted</th>
+                  </tr>
+                </thead>
+                <tbody id="allAppsTable">
+                  <tr>
+                    <td colspan="10">
+                      <div class="load-row"><div class="spinner"></div> Loading blockchain data...</div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- Application detail panel -->
+        <section id="detailPanel" style="display: none; margin-top: 0">
+          <div class="card">
+            <div class="card-header">
+              <span class="card-title"
+                >Application Detail —
+                <span id="det-id" style="color: var(--accent)">#—</span></span
+              >
+              <button class="btn btn-ghost btn-sm" onclick="closeDetail()">
+                ✕ Close
+              </button>
+            </div>
+            <div class="card-body">
+              <div
+                class="detail-grid-3"
+                style="
+                  display: grid;
+                  grid-template-columns: 1fr 1fr 1fr;
+                  gap: 20px;
+                  margin-bottom: 20px;
+                "
+              >
+                <div>
+                  <div class="form-label">District</div>
+                  <div id="det-district" class="td-primary">—</div>
+                  <div id="det-addr" class="hash mt-4">—</div>
+                </div>
+                <div>
+                  <div class="form-label">Requested</div>
+                  <div
+                    id="det-requested"
+                    style="
+                      font-family: var(--mono);
+                      font-weight: 600;
+                      color: var(--text);
+                    "
+                  >
+                    —
+                  </div>
+                </div>
+                <div>
+                  <div class="form-label">Allocated</div>
+                  <div
+                    id="det-allocated"
+                    style="
+                      font-family: var(--mono);
+                      font-weight: 600;
+                      color: var(--green);
+                    "
+                  >
+                    —
+                  </div>
+                </div>
+              </div>
+              <div style="margin-bottom: 16px">
+                <div class="form-label">Full Purpose</div>
+                <div
+                  id="det-purpose"
+                  class="text-2"
+                  style="line-height: 1.7; font-size: 13.5px"
+                >
+                  —
+                </div>
+              </div>
+              <div
+                class="detail-grid-2"
+                style="
+                  display: grid;
+                  grid-template-columns: 1fr 1fr;
+                  gap: 16px;
+                  margin-bottom: 16px;
+                "
+              >
+                <div>
+                  <div class="form-label">AI Recommendation</div>
+                  <div
+                    id="det-aireason"
+                    class="alert alert-info"
+                    style="margin-bottom: 10px; font-size: 12.5px"
+                  >
+                    —
+                  </div>
+                  <div class="score-row">
+                    <span class="score-label">Priority</span>
+                    <div class="score-bar">
+                      <div
+                        class="score-fill priority"
+                        id="det-priority-bar"
+                        style="width: 0%"
+                      ></div>
+                    </div>
+                    <span class="score-num" id="det-priority-num">0</span>
+                  </div>
+                  <div class="score-row">
+                    <span class="score-label">Risk</span>
+                    <div class="score-bar">
+                      <div
+                        class="score-fill risk"
+                        id="det-risk-bar"
+                        style="width: 0%"
+                      ></div>
+                    </div>
+                    <span class="score-num" id="det-risk-num">0</span>
+                  </div>
+                </div>
+                <div>
+                  <div class="form-label">Decision</div>
+                  <div
+                    id="det-decision"
+                    class="text-2"
+                    style="font-size: 13px; line-height: 1.6"
+                  >
+                    —
+                  </div>
+                  <div class="form-label" style="margin-top: 12px">Status</div>
+                  <div id="det-status">—</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <div class="toast-container" id="toasts"></div>
+    <script src="../JavaScripts/contract.js"></script>
+    <script src="../JavaScripts/public.js"></script>
+    <script src="../JavaScripts/sidebar.js"></script>
+    <script src="../JavaScripts/pages/dashboard.js"></script>
+  </body>
+</html>

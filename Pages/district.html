@@ -1,0 +1,176 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Xfer — District Portal</title>
+    <link rel="stylesheet" href="../CSS/style.css" />
+  </head>
+  <body>
+    <div class="layout" id="layout">
+      <aside class="sidebar" id="sidebar">
+        <button class="sidebar-toggle" onclick="toggleSidebar()" title="Toggle sidebar">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="3" y1="6" x2="21" y2="6" />
+            <line x1="3" y1="12" x2="21" y2="12" />
+            <line x1="3" y1="18" x2="21" y2="18" />
+          </svg>
+        </button>
+
+        <a href="../index.html" class="logo">
+          <div class="logo-mark"></div>
+          <div>
+            <div class="logo-text">Xfer</div>
+            <div class="logo-sub">Fund Protocol</div>
+          </div>
+        </a>
+
+        <div class="sidebar-inner">
+          <span class="nav-label">Navigation</span>
+          <a href="dashboard.html" class="nav-link" data-label="Public Audit">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M3 3h7v7H3zM14 3h7v7h-7zM3 14h7v7H3zM14 14h7v7h-7z" />
+            </svg>
+            <span class="nav-text">Public Audit</span>
+          </a>
+          <a href="admin.html" class="nav-link" data-label="Head Office">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="3" />
+              <path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14" />
+            </svg>
+            <span class="nav-text">Head Office</span>
+          </a>
+          <div class="wallet-box">
+            <div class="wallet-badge">
+              <div class="wallet-dot disconnected" id="walletDot"></div>
+              <div class="wallet-addr" id="walletAddr">Not connected</div>
+            </div>
+            <button
+              class="btn btn-primary btn-sm"
+              id="connectBtn"
+              style="width:100%; margin-top:8px; justify-content:center"
+              onclick="connectWallet()">
+              Connect Wallet
+            </button>
+            <div id="districtInfo" style="display:none">
+              <div style="margin-top:7px; font-size:11px; color:var(--text-3)">District:
+                <span style="color:var(--text-2)" id="districtName">—</span>
+              </div>
+              <div style="margin-top:3px; font-size:11px; color:var(--text-3)">
+                Total received:
+                <span style="color:var(--green); font-family:var(--mono)" id="totalRec">—</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </aside>
+
+      <main class="main">
+        <div class="page-header">
+          <h1>District Portal</h1>
+          <p>Submit funding applications and track their status in real time.</p>
+        </div>
+
+        <!-- Stats start as — until wallet connects -->
+        <div class="stats">
+          <div class="stat-card">
+            <div class="stat-label">Applications Submitted</div>
+            <div class="stat-value" id="s-total">—</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Pending Review</div>
+            <div class="stat-value amber" id="s-pending">—</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Total Approved</div>
+            <div class="stat-value blue" id="s-approved">—</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Total Received</div>
+            <div class="stat-value green" id="s-received">—</div>
+          </div>
+        </div>
+
+        <div class="alert alert-warning" id="notRegistered" style="display:none"> ⚠ Your wallet is not registered as a district office. Contact head office to register your wallet address before submitting. </div>
+
+        <!-- Submit -->
+        <section id="submit">
+          <div class="card">
+            <div class="card-header">
+              <span class="card-title">New Funding Application</span>
+            </div>
+            <div class="card-body">
+              <div class="form-group">
+                <label class="form-label">Purpose / Project Description</label>
+                <textarea class="form-textarea" id="appPurpose" style="min-height:110px" placeholder="Describe the project clearly — what is being funded, where, and why it is needed. e.g. Road repair on NH-28 connecting Lucknow to Sitapur, damaged by monsoon flooding affecting 12,000 daily commuters..."></textarea>
+                <div class="form-hint">Be specific. AI uses this to evaluate urgency and impact.</div>
+              </div>
+              <div class="form-row">
+                <div>
+                  <label class="form-label">Amount Requested (ETH)</label>
+                  <input
+                    type="number"
+                    class="form-input"
+                    id="appAmount"
+                    placeholder="e.g. 2.5"
+                    step="0.001"
+                    min="0.001" />
+                  <div class="form-hint">Enter the exact amount required</div>
+                </div>
+                <div>
+                  <label class="form-label">Category</label>
+                  <select class="form-select" id="appCategory">
+                    <option value="">Select category</option>
+                    <option>Agriculture</option>
+                    <option>Disaster Response</option>
+                    <option>Education</option>
+                    <option>Energy</option>
+                    <option>Environment</option>
+                    <option>Healthcare</option>
+                    <option>Road &amp; Infrastructure</option>
+                    <option>Water &amp; Sanitation</option>
+                    <option>Other</option>
+                  </select>
+                  <div class="form-hint">Recorded on-chain as part of the purpose text</div>
+                </div>
+              </div>
+              <div class="divider"></div>
+              <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px">
+                <div class="form-hint" style="margin:0">
+                  Submitting creates an on-chain record. Gas fee applies.
+                </div>
+                <button id="submitBtn" class="btn btn-primary" onclick="submitApplication()">
+                  Submit Application →
+                </button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- My applications -->
+        <section id="myapps">
+          <div class="card">
+            <div class="card-header">
+              <span class="card-title">My Applications</span>
+              <button class="btn btn-ghost btn-sm" onclick="refreshApps()">↻ Refresh</button>
+            </div>
+            <div id="appsList">
+              <div class="empty">
+                <div class="empty-icon">🔗</div>
+                <h3>Connect your wallet</h3>
+                <p>Connect your district wallet above to see your applications.</p>
+              </div>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <div class="toast-container" id="toasts"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/ethers@6.13.5/dist/ethers.umd.min.js"></script>
+    <script src="../JavaScripts/contract.js"></script>
+    <script src="../JavaScripts/sidebar.js"></script>
+    <script src="../JavaScripts/pages/district.js"></script>
+  </body>
+</html>

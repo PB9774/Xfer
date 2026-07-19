@@ -1,0 +1,648 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Xfer — Head Office Panel</title>
+    <link rel="stylesheet" href="../CSS/style.css" />
+  </head>
+  <body>
+    <div class="layout" id="layout">
+      <aside class="sidebar" id="sidebar">
+        <button
+          class="sidebar-toggle"
+          onclick="toggleSidebar()"
+          title="Toggle sidebar"
+        >
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+          >
+            <line x1="3" y1="6" x2="21" y2="6" />
+            <line x1="3" y1="12" x2="21" y2="12" />
+            <line x1="3" y1="18" x2="21" y2="18" />
+          </svg>
+        </button>
+        <a href="../index.html" class="logo">
+          <div class="logo-mark"></div>
+          <div>
+            <div class="logo-text">Xfer</div>
+            <div class="logo-sub">Fund Protocol</div>
+          </div>
+        </a>
+        <div class="sidebar-inner">
+          <span class="nav-label">Head Office</span>
+          <a
+            href="#applications"
+            class="nav-link active"
+            data-label="Applications"
+            onclick="switchAdminTab('applications')"
+          >
+            <svg
+              class="icon"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <rect x="3" y="3" width="18" height="18" rx="2" />
+              <path d="M9 9h6M9 13h6M9 17h4" />
+            </svg>
+            <span class="nav-text">Applications</span>
+          </a>
+          <a href="#ai-tools" class="nav-link" data-label="AI Tools" onclick="switchAdminTab('ai')">
+            <svg
+              class="icon"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <circle cx="12" cy="12" r="3" />
+              <path
+                d="M12 2v3M12 19v3M4.22 4.22l2.12 2.12M17.66 17.66l2.12 2.12M2 12h3M19 12h3M4.22 19.78l2.12-2.12M17.66 6.34l2.12-2.12"
+              />
+            </svg>
+            <span class="nav-text">AI Tools</span>
+          </a>
+          <a href="#treasury" class="nav-link" data-label="Treasury &amp; Districts" onclick="switchAdminTab('treasury')">
+            <svg
+              class="icon"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <path
+                d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"
+              />
+            </svg>
+            <span class="nav-text">Treasury &amp; Districts</span>
+          </a>
+          <span class="nav-label">Navigation</span>
+          <a href="district.html" class="nav-link" data-label="District Portal">
+            <svg
+              class="icon"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+              <circle cx="9" cy="7" r="4" />
+            </svg>
+            <span class="nav-text">District Portal</span>
+          </a>
+          <a href="dashboard.html" class="nav-link" data-label="Public Audit">
+            <svg
+              class="icon"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <path d="M3 3h7v7H3zM14 3h7v7h-7zM3 14h7v7H3zM14 14h7v7h-7z" />
+            </svg>
+            <span class="nav-text">Public Audit</span>
+          </a>
+          <div class="wallet-box">
+            <div class="wallet-badge">
+              <div class="wallet-dot disconnected" id="walletDot"></div>
+              <div class="wallet-addr" id="walletAddr">Not connected</div>
+            </div>
+            <button
+              class="btn btn-primary btn-sm"
+              id="connectBtn"
+              style="width:100%; margin-top:8px; justify-content:center"
+              onclick="connectWallet()">
+              Connect Wallet
+            </button>
+            <div id="ownerInfo" style="display:none">
+              <div class="small-muted" style="margin-top:7px">
+                Role:
+                <span id="ownerRole" style="color:var(--green); font-weight:600">—</span>
+              </div>
+              <div class="small-muted">
+                Balance: <span class="text-mono" id="sideBalance">—</span>
+              </div>
+              <div class="small-muted">
+                Available: <span class="text-mono text-green" id="sideAvail">—</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </aside>
+
+      <main class="main">
+        <!-- Access gate: shown until the connected wallet is verified as the Head Office owner -->
+        <div id="accessGate" class="card" style="max-width:480px; margin:80px auto; text-align:center; padding:36px 28px;">
+          <div class="logo-mark" style="width:52px;height:52px;margin:0 auto 14px;"></div>
+          <h2 class="card-heading-strong" style="margin:0 0 8px;">Head Office Access</h2>
+          <p id="gateMessage" class="text-2" style="margin:0 0 22px; font-size:13.5px; line-height:1.6;">
+            Connect the Head Office wallet to view and manage applications.
+          </p>
+          <button class="btn btn-primary" id="gateConnectBtn" onclick="connectWallet()">
+            Connect Wallet
+          </button>
+        </div>
+
+        <!-- Everything below is hidden until isOwner is verified true -->
+        <div id="ownerContent" style="display:none">
+        <div class="page-header flex-between">
+          <div>
+            <h1>Head Office Panel</h1>
+            <p>
+              Review applications, set AI scores, manage districts, and release
+              funds.
+            </p>
+          </div>
+          <div class="nav-actions">
+            <button class="btn btn-ghost btn-sm" onclick="refreshAll()">
+              ↻ Refresh
+            </button>
+          </div>
+        </div>
+
+        <!-- Stats — always visible above the tabs, since every tab's actions affect the treasury -->
+        <div class="stats">
+          <div class="stat-card">
+            <div class="stat-label">Treasury Balance</div>
+            <div class="stat-value blue" id="s-balance">— ETH</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Available to Approve</div>
+            <div class="stat-value green" id="s-available">— ETH</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Pending Applications</div>
+            <div class="stat-value amber" id="s-pending">—</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Total Released</div>
+            <div class="stat-value" id="s-released">— ETH</div>
+          </div>
+        </div>
+
+        <!-- Tabs — replaces the old full-width vertical stack of every
+             section (Applications → AI Ranking → Store Scores → Deposit →
+             Register) so managing the protocol doesn't require scrolling
+             through every surface every time. -->
+        <div class="tab-bar">
+          <button class="tab-btn active" data-tab="applications" onclick="switchAdminTab('applications')">Applications</button>
+          <button class="tab-btn" data-tab="ai" onclick="switchAdminTab('ai')">AI Tools</button>
+          <button class="tab-btn" data-tab="treasury" onclick="switchAdminTab('treasury')">Treasury &amp; Districts</button>
+        </div>
+
+        <!-- ── Tab: Applications ─────────────────────────────────────── -->
+        <div class="tab-panel active" id="tab-applications">
+          <section id="applications">
+            <div class="card">
+              <div class="card-header">
+                <span class="card-title">All Applications</span>
+                <div class="nav-actions">
+                  <input
+                    type="text"
+                    class="form-input inline-input-sm"
+                    placeholder="Search..."
+                    oninput="filterTable(this.value)"
+                  />
+                  <select
+                    class="form-select inline-select-sm"
+                    onchange="filterByStatus(this.value)"
+                  >
+                    <option value="all">All Status</option>
+                    <option value="0">Pending</option>
+                    <option value="1">Approved</option>
+                    <option value="2">Rejected</option>
+                    <option value="3">Funded</option>
+                  </select>
+                </div>
+              </div>
+              <div class="table-wrap">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>ID</th>
+                      <th>District</th>
+                      <th>Purpose</th>
+                      <th>Requested</th>
+                      <th>AI Priority</th>
+                      <th>AI Risk</th>
+                      <th>Status</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody id="appsTable">
+                    <tr>
+                      <td colspan="8">
+                        <div class="empty">
+                          <div class="empty-icon">📋</div>
+                          <h3>Connect wallet to load applications</h3>
+                          <p>
+                            Click Connect Wallet above to read from the
+                            blockchain.
+                          </p>
+                        </div>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              <div
+                id="appsPagination"
+                style="display:none; align-items:center; justify-content:flex-end; gap:12px; padding:14px 20px;">
+                <button id="prevPageBtn" class="btn btn-ghost btn-sm" onclick="changePage(-1)">← Prev</button>
+                <span id="pageIndicator" class="text-2" style="font-size:13px;">Page 1 of 1</span>
+                <button id="nextPageBtn" class="btn btn-ghost btn-sm" onclick="changePage(1)">Next →</button>
+              </div>
+            </div>
+          </section>
+
+          <!-- Review & Decision panel -->
+          <section id="decisionPanel" class="hidden">
+            <div class="card" style="border-top: 3px solid var(--accent)">
+              <div class="card-header">
+                <span class="card-title"
+                  >Review Application
+                  <span id="reviewId" style="color: var(--accent)">#—</span></span
+                >
+                <button class="btn btn-ghost btn-sm" onclick="closeReview()">
+                  ✕ Close
+                </button>
+              </div>
+              <div class="card-body">
+                <div class="grid-3" style="margin-bottom: 20px">
+                  <div>
+                    <div class="form-label">District</div>
+                    <div id="rev-district" class="td-primary card-heading-strong">—</div>
+                    <div id="rev-addr" class="hash mt-4">0x...</div>
+                  </div>
+                  <div>
+                    <div class="form-label">Requested Amount</div>
+                    <div id="rev-amount" class="mono-strong text-accent">— ETH</div>
+                  </div>
+                  <div>
+                    <div class="form-label">Submitted</div>
+                    <div id="rev-time" class="text-2">—</div>
+                  </div>
+                  <div style="grid-column: 1/-1">
+                    <div class="form-label">Full Purpose</div>
+                    <div id="rev-purpose" class="text-2 card-purpose">—</div>
+                  </div>
+                </div>
+
+                <!-- AI scores display -->
+                <div
+                  style="
+                    background: var(--accent-light);
+                    border: 1px solid var(--blue-border);
+                    border-radius: var(--r-sm);
+                    padding: 16px;
+                    margin-bottom: 20px;
+                  "
+                >
+                  <div class="flex-between" style="margin-bottom: 12px">
+                    <span class="form-label" style="margin: 0">AI Evaluation</span>
+                    <span id="aiEvalBadge" class="badge badge-pending">Not evaluated</span>
+                  </div>
+                  <div
+                    id="rev-aireason"
+                    class="text-2"
+                    style="font-size: 12.5px; margin-bottom: 14px; line-height: 1.6"
+                  >
+                    Run AI evaluation to get scores for this application.
+                  </div>
+                  <div class="score-row">
+                    <span class="score-label">Priority Score</span>
+                    <div class="score-bar">
+                      <div class="score-fill priority" id="bar-priority" style="width: 0%"></div>
+                    </div>
+                    <span class="score-num" id="num-priority">—</span>
+                  </div>
+                  <div class="score-row">
+                    <span class="score-label">Risk Score</span>
+                    <div class="score-bar">
+                      <div class="score-fill risk" id="bar-risk" style="width: 0%"></div>
+                    </div>
+                    <span class="score-num" id="num-risk">—</span>
+                  </div>
+                  <button
+                    class="btn btn-ghost btn-sm mt-16"
+                    onclick="runAIOnCurrent()"
+                    id="runAiBtn"
+                  >
+                    🤖 Run AI Evaluation
+                  </button>
+                  <div class="form-hint" style="margin-top:8px;">Stores the result on-chain automatically — you'll be asked to confirm a wallet transaction.</div>
+                </div>
+
+                <div class="divider"></div>
+
+                <!-- Approve / Reject forms side by side -->
+                <div class="grid-2">
+                  <div
+                    style="
+                      background: var(--green-bg);
+                      border: 1px solid var(--green-border);
+                      border-radius: var(--r-sm);
+                      padding: 18px;
+                    "
+                  >
+                    <div
+                      style="
+                        font-size: 13px;
+                        font-weight: 700;
+                        color: var(--green);
+                        margin-bottom: 14px;
+                      "
+                    >
+                      ✓ Approve Application
+                    </div>
+                    <div class="form-group">
+                      <label class="form-label">Allocated Amount (ETH)</label>
+                      <input
+                        type="number"
+                        class="form-input"
+                        id="allocAmount"
+                        placeholder="e.g. 2.0"
+                        step="0.01"
+                      />
+                      <div class="form-hint">Cannot exceed requested amount</div>
+                    </div>
+                    <div class="form-group mb-0">
+                      <label class="form-label"
+                        >Reason for Approval
+                        <span style="color: var(--red)">*</span></label
+                      >
+                      <textarea class="form-textarea min-h-md" id="approveReason" placeholder="e.g. Flood affected area, verified urgent requirement..."></textarea>
+                    </div>
+                    <button id="approveBtn" class="btn btn-success btn-block" onclick="approveApplication()">
+                      Approve &amp; Reserve Funds
+                    </button>
+                  </div>
+
+                  <div
+                    style="
+                      background: var(--red-bg);
+                      border: 1px solid var(--red-border);
+                      border-radius: var(--r-sm);
+                      padding: 18px;
+                    "
+                  >
+                    <div
+                      style="
+                        font-size: 13px;
+                        font-weight: 700;
+                        color: var(--red);
+                        margin-bottom: 14px;
+                      "
+                    >
+                      ✕ Reject Application
+                    </div>
+                    <div class="form-group mb-0">
+                      <label class="form-label"
+                        >Reason for Rejection
+                        <span style="color: var(--red)">*</span></label
+                      >
+                      <textarea class="form-textarea min-h-md" id="rejectReason" placeholder="e.g. Missing supporting documents, budget too high, duplicate request..."></textarea>
+                    </div>
+                    <button id="rejectBtn" class="btn btn-danger btn-block" onclick="rejectApplication()">
+                      Reject Application
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <!-- Release funds -->
+          <section id="releaseSection" class="hidden">
+            <div class="card" style="border-top: 3px solid var(--green)">
+              <div class="card-header">
+                <span class="card-title">Release Approved Funds</span>
+                <button
+                  class="btn btn-ghost btn-sm"
+                  onclick="
+                    document.getElementById('releaseSection').style.display =
+                      'none'
+                  "
+                >
+                  ✕
+                </button>
+              </div>
+              <div class="card-body">
+                <div class="alert alert-warning">
+                  ⚠ Funds will be transferred directly and permanently to the
+                  district wallet. This action cannot be undone.
+                </div>
+                <div class="nav-actions align-end">
+                  <div class="form-group mb-0 flex-1">
+                    <label class="form-label">Application ID</label
+                    ><input
+                      type="number"
+                      class="form-input"
+                      id="releaseId"
+                      placeholder="Enter application ID"
+                    />
+                  </div>
+                  <button
+                    id="releaseBtn"
+                    class="btn btn-primary"
+                    onclick="releaseFunds()"
+                  >
+                    Release Funds →
+                  </button>
+                </div>
+              </div>
+            </div>
+          </section>
+        </div>
+
+        <!-- ── Tab: AI Tools ────────────────────────────────────────────── -->
+        <div class="tab-panel" id="tab-ai">
+          <div class="tab-cols">
+            <section id="ai-panel">
+              <div class="card" style="border-top: 3px solid var(--accent)">
+                <div class="card-header">
+                  <span class="card-title">🤖 AI Bulk Ranking</span>
+                </div>
+                <div class="card-body">
+                  <div class="alert alert-info" style="margin-bottom: 20px">
+                    AI reads all pending applications and ranks them by urgency and
+                    impact. AI only recommends — you still approve or reject.
+                  </div>
+                  <button
+                    class="btn btn-primary"
+                    onclick="runAIRanking()"
+                    id="rankBtn"
+                  >
+                    🤖 Rank All Pending Applications
+                  </button>
+                  <div id="rankingResults" style="display: none; margin-top: 20px">
+                    <div class="form-label" style="margin-bottom: 12px">
+                      AI Priority Ranking
+                    </div>
+                    <div id="rankingList"></div>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            <section id="set-ai">
+              <div class="card">
+                <div class="card-header">
+                  <span class="card-title">Store AI Scores On-Chain</span>
+                  <button
+                    id="unlockAiFieldsBtn"
+                    class="btn btn-ghost btn-sm"
+                    style="display:none;"
+                    onclick="unlockAiFields()"
+                  >
+                    🔓 Override AI Scores
+                  </button>
+                </div>
+                <div class="card-body">
+                  <div class="alert alert-info">
+                    Running "Run AI Evaluation" from an application's Review panel
+                    now stores its scores on-chain automatically as its final step.
+                    Use this form only for scores from Bulk Ranking, or to manually
+                    override an already-stored value.
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">Application ID</label
+                    ><input
+                      type="number"
+                      class="form-input"
+                      id="aiAppId"
+                      placeholder="e.g. 0"
+                    />
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">Priority Score (0–100)</label
+                    ><input
+                      type="number"
+                      class="form-input"
+                      id="aiPriority"
+                      min="0"
+                      max="100"
+                      placeholder="e.g. 85"
+                    />
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">Risk Score (0–100)</label
+                    ><input
+                      type="number"
+                      class="form-input"
+                      id="aiRisk"
+                      min="0"
+                      max="100"
+                      placeholder="e.g. 25"
+                    />
+                  </div>
+                  <div class="form-group mb-0">
+                    <label class="form-label">AI Explanation</label
+                    ><input
+                      type="text"
+                      class="form-input"
+                      id="aiReasonInput"
+                      placeholder="e.g. High urgency flood relief, low risk project"
+                    />
+                  </div>
+                  <button
+                    id="aiBtn"
+                    class="btn btn-primary"
+                    style="margin-top: 14px"
+                    onclick="storeAIOnChain()"
+                  >
+                    Store AI Scores On-Chain →
+                  </button>
+                </div>
+              </div>
+            </section>
+          </div>
+        </div>
+
+        <!-- ── Tab: Treasury & Districts ───────────────────────────────── -->
+        <div class="tab-panel" id="tab-treasury">
+          <div class="tab-cols">
+            <section id="deposit">
+              <div class="card">
+                <div class="card-header">
+                  <span class="card-title">Deposit to Treasury</span>
+                </div>
+                <div class="card-body">
+                  <div class="form-group">
+                    <label class="form-label">Amount (ETH)</label
+                    ><input
+                      type="number"
+                      class="form-input"
+                      id="depositAmount"
+                      placeholder="e.g. 5.0"
+                      step="0.1"
+                    />
+                    <div class="form-hint">
+                      Held securely in the smart contract
+                    </div>
+                  </div>
+                  <button
+                    id="depositBtn"
+                    class="btn btn-primary btn-block"
+                    onclick="depositFunds()"
+                  >
+                    Deposit ETH →
+                  </button>
+                </div>
+              </div>
+            </section>
+
+            <section id="districts">
+              <div class="card">
+                <div class="card-header">
+                  <span class="card-title">Register District Office</span>
+                </div>
+                <div class="card-body">
+                  <div class="form-group">
+                    <label class="form-label">District Wallet Address</label
+                    ><input
+                      type="text"
+                      class="form-input"
+                      id="distAddr"
+                      placeholder="0x..."
+                      style="font-family: var(--mono); font-size: 13px"
+                    />
+                  </div>
+                  <div class="form-group mb-0">
+                    <label class="form-label">District Name</label
+                    ><input
+                      type="text"
+                      class="form-input"
+                      id="distName"
+                      placeholder="e.g. Lucknow District"
+                    />
+                  </div>
+                  <button
+                    id="registerBtn"
+                    class="btn btn-primary btn-block"
+                    style="margin-top: 14px"
+                    onclick="registerDistrict()"
+                  >
+                    Register District →
+                  </button>
+                </div>
+              </div>
+            </section>
+          </div>
+        </div>
+        </div>
+      </main>
+    </div>
+
+    <div class="toast-container" id="toasts"></div>
+    <script src="https://cdn.jsdelivr.net/npm/ethers@6.13.5/dist/ethers.umd.min.js"></script>
+    <script src="../JavaScripts/contract.js"></script>
+    <script src="../JavaScripts/sidebar.js"></script>
+    <script src="../JavaScripts/pages/admin.js"></script>
+  </body>
+</html>
