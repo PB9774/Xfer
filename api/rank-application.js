@@ -1,4 +1,3 @@
-
 export default async function handler(req, res) {
   if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
 
@@ -33,23 +32,31 @@ Return exactly this JSON format:
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           contents: [{ parts: [{ text: prompt }] }],
-          generationConfig: {
-            temperature: 0.2,
-            maxOutputTokens: 4096,
-          }
+          generationConfig: { temperature: 0.2, maxOutputTokens: 4096 }
         })
       }
     );
 
-     const data    = await geminiRes.json();
-    if (!geminiRes.ok || !data.candidates) {
-      console.error("Gemini API did not return candidates:", JSON.stringify(data));
-    }
-    const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
-    const cleaned = rawText.replace(/```json|```/g, "").trim();
-    const result  = JSON.parse(cleaned);
+    const data = await geminiRes.json();
 
-    // Clamp scores to 0-100
+    if (!geminiRes.ok || !data.candidates) {
+      console.error("Gemini API error:", geminiRes.status, JSON.stringify(data));
+      return res.status(502).json({ error: "Gemini API error", detail: data.error?.message || `status ${geminiRes.status}` });
+    }
+
+    const rawText = data.candidates[0]?.content?.parts?.[0]?.text || "";
+
+    let result;
+    try {
+      const cleaned = rawText.replace(/```json|```/g, "").trim();
+      result = JSON.parse(cleaned);
+    } catch (parseErr) {
+      // Log the actual text that failed to parse — this is the piece that
+      // was invisible before, and is the most likely culprit.
+      console.error("Failed to parse Gemini output as JSON. Raw text was:", rawText);
+      return res.status(502).json({ error: "Could not parse AI response", detail: rawText.slice(0, 300) });
+    }
+
     result.priorityScore = Math.max(0, Math.min(100, Number(result.priorityScore)));
     result.riskScore     = Math.max(0, Math.min(100, Number(result.riskScore)));
 
@@ -57,7 +64,6 @@ Return exactly this JSON format:
 
   } catch (err) {
     console.error("rank-application failed:", err.message);
-    // Fallback so frontend never crashes
-    res.status(200).json({ priorityScore: 50, riskScore: 50, reason: "AI evaluation unavailable. Please review manually." });
+    res.status(502).json({ error: "AI evaluation unavailable", detail: err.message });
   }
 }
