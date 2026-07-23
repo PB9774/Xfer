@@ -7,46 +7,43 @@
 @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
 
 :root {
-  --bg:          #f6edd1;
-  --surface:     #fbf7eb;
-  --surface-2:   #f2e9ce;
-  --border:      #D8C696;
-  --border-2:    #070707;
+  --bg:          #F0F4FF;
+  --surface:     #FFFFFF;
+  --surface-2:   #F8FAFF;
+  --border:      #DBEAFE;
+  --border-2:    #BFDBFE;
 
-  --accent:      #8A6423;
-  --accent-mid:  #6E4F19;
-  --accent-light:#F1E3BE;
-  --accent-glow: rgba(138,100,35,.18);
+  --accent:      #1D4ED8;
+  --accent-mid:  #2563EB;
+  --accent-light:#EFF6FF;
+  --accent-glow: rgba(37,99,235,.12);
 
-  --green:       #10b357;
-  --green-bg:    #DCEEE0;
-  --green-border:#9ED2AC;
-  --amber:       #c68311;
-  --amber-bg:    #F5E3B8;
-  --amber-border:#E2B865;
-  --red:         #d1213c;
-  --red-bg:      #F6DBDD;
-  --red-border:  #E3A9AF;
-  --blue-bg:     #EFE3C6;
-  --blue-border: #D9C48D;
+  --green:       #059669;
+  --green-bg:    #ECFDF5;
+  --green-border:#A7F3D0;
+  --amber:       #B45309;
+  --amber-bg:    #FFFBEB;
+  --amber-border:#FDE68A;
+  --red:         #DC2626;
+  --red-bg:      #FEF2F2;
+  --red-border:  #FECACA;
+  --blue-bg:     #EFF6FF;
+  --blue-border: #BFDBFE;
 
-  --text:        #241D0F;
-  --text-2:      #574B30;
-  --text-3:      #948461;
+  --text:        #1E293B;
+  --text-2:      #475569;
+  --text-3:      #94A3B8;
 
   --sans: 'Inter', sans-serif;
-  --serif:'Fraunces', serif;
   --mono: 'JetBrains Mono', monospace;
-  --r:    9px;
-  --r-sm: 5px;
+  --r:    10px;
+  --r-sm: 6px;
 
-  --sidebar-w: 224px;
+  --sidebar-w: 220px;
   --sidebar-collapsed: 64px;
 
   --main-pad-x: 36px;
   --main-pad-y: 32px;
-
-  color-scheme: light;
 }
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
